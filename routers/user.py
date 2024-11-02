@@ -8,7 +8,8 @@ from starlette.responses import JSONResponse
 
 from auth.auth import get_current_user, jwks
 from auth.JWTBearer import JWTAuthorizationCredentials, JWTBearer
-from auth.user_auth import auth_with_code, user_info_with_token
+from auth.user_auth import (auth_with_code, logout_with_token,
+                            user_info_with_token)
 from crud.userRepo import create_user, get_user_by_email, get_user_by_username
 from db.database import get_db
 from models.user import User
@@ -73,3 +74,18 @@ async def current_user(
         status_code=200,
         content=jsonable_encoder(get_user_by_username(username=username, db=db)),
     )
+
+@router.get("/auth/logout", dependencies=[Depends(auth)])
+async def logout(credentials: JWTAuthorizationCredentials = Depends(auth)):
+    """
+    Function that logs out a user.
+
+    :param credentials: JWTAuthorizationCredentials object.
+    :return: Message if logout is successful, otherwise raise an HTTPException.
+    """
+
+    result = logout_with_token(credentials.jwt_token)
+    if result:
+        return JSONResponse(status_code=200, content="Logout successful")
+    else:
+        raise HTTPException(status_code=401, detail="Error loging out...")

@@ -127,3 +127,44 @@ def test_successful_login_with_valid_credentials_new_user(
         ),
         mock_db,
     )
+
+@patch("routers.user.logout_with_token", return_value=True)
+def test_successful_logout(mock_logout_with_token):
+    app.dependency_overrides[auth] = lambda: JWTAuthorizationCredentials(
+        jwt_token="token",
+        header={"kid": "some_kid"},
+        claims={"sub": "user_id"},
+        signature="signature",
+        message="message",
+    )
+
+    headers = {"Authorization": "Bearer token"}
+    response = client.get("/auth/logout", headers=headers)
+
+    assert response.status_code == 200
+    assert response.json() == "Logout successful"
+
+    mock_logout_with_token.assert_called_once_with("token")
+
+    app.dependency_overrides = {}
+
+
+@patch("routers.user.logout_with_token", return_value=False)
+def test_unsuccessful_logout(mock_logout_with_token):
+    app.dependency_overrides[auth] = lambda: JWTAuthorizationCredentials(
+        jwt_token="token",
+        header={"kid": "some_kid"},
+        claims={"sub": "user_id"},
+        signature="signature",
+        message="message",
+    )
+
+    headers = {"Authorization": "Bearer token"}
+    response = client.get("/auth/logout", headers=headers)
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Error loging out..."}
+
+    mock_logout_with_token.assert_called_once_with("token")
+
+    app.dependency_overrides = {}
