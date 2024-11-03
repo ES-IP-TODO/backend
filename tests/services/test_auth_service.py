@@ -5,7 +5,8 @@ from unittest.mock import patch
 
 import pytest
 
-from auth.user_auth import auth_with_code, user_info_with_token
+from auth.user_auth import (auth_with_code, logout_with_token,
+                            user_info_with_token)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -90,7 +91,6 @@ def test_user_info_with_token(mock_cognito_client_get_user_function):
     assert result == {"ResponseMetadata": {"HTTPStatusCode": 200}}
 
 
-# 400 it's just a random error status code to test the error handling
 @patch(
     "auth.user_auth.cognito_client.get_user",
     return_value={"ResponseMetadata": {"HTTPStatusCode": 400}},
@@ -102,3 +102,28 @@ def test_unsuccessful_user_info_with_token(mock_cognito_client_get_user_function
         AccessToken="access_token_2"
     )
     assert result is None
+
+@patch(
+    "auth.user_auth.cognito_client.global_sign_out",
+    return_value={"ResponseMetadata": {"HTTPStatusCode": 200}},
+)
+def test_logout_with_token(mock_cognito_client_global_sign_out_function):
+    result = logout_with_token("access_token")
+
+    mock_cognito_client_global_sign_out_function.assert_called_once_with(
+        AccessToken="access_token"
+    )
+    assert result == True
+
+
+@patch(
+    "auth.user_auth.cognito_client.global_sign_out",
+    return_value={"ResponseMetadata": {"HTTPStatusCode": 400}},
+)
+def test_unsuccessful_logout_with_token(mock_cognito_client_global_sign_out_function):
+    result = logout_with_token("access_token_2")
+
+    mock_cognito_client_global_sign_out_function.assert_called_once_with(
+        AccessToken="access_token_2"
+    )
+    assert result == False
