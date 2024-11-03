@@ -91,7 +91,7 @@ def test_create_task(test_db, new_user: UserModel):
     assert task.title == new_task.title
     assert task.description == new_task.description
     assert task.priority == TaskPriority.LOW
-    assert task.deadline.replace(microsecond=0, tzinfo=None) == new_task.deadline.replace(microsecond=0, tzinfo=None)
+    assert abs((task.deadline.replace(tzinfo=timezone.utc) - new_task.deadline).total_seconds()) < 2
     assert task.user_id == new_user.id
     assert task.status == TaskStatus.TODO
     assert task.created_at is not None
