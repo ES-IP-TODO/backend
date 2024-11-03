@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from db.create_database import create_tables
 from db.database import SessionLocal
-from routers import user
+from routers import task, user
 
 
 @asynccontextmanager
@@ -37,6 +37,7 @@ app.add_middleware(
 )
 
 app.include_router(user.router)
+app.include_router(task.router)
 
 
 @app.middleware("http")
