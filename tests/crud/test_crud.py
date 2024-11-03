@@ -1,16 +1,23 @@
 import logging
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pytest
 from fastapi import HTTPException
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session, sessionmaker
 from testcontainers.mysql import MySqlContainer
 
+from crud.task import create_task, get_task_by_id, get_task_by_user_id
 from crud.user import create_user, get_user_by_email, get_user_by_username
 from db.database import get_db
 from main import app
+from models.task import Task as TaskModel
+from models.task import TaskPriority, TaskStatus
 from models.user import User
+from models.user import User as UserModel
+from schemas.task import TaskCreate
 from schemas.user import CreateUser
 
 logging.basicConfig(level=logging.INFO)
@@ -72,6 +79,7 @@ def create_test_user(test_db):
     logger.info("creating test user")
     yield test_user
     logger.info("deleting test user")
+    test_db.query(TaskModel).filter(TaskModel.user_id == test_user.id).delete()
     test_db.delete(test_user)
     test_db.commit()
 
@@ -118,3 +126,37 @@ def test_create_user(test_db):
         and user.family_name == "family_name2"
         and user.email == "email2"
     )
+
+def test_create_task(test_db, test_user: UserModel):
+    new_task = TaskCreate(
+        title="Test Task",
+        description="Test Description",
+        priority="low",
+        deadline=datetime.now(timezone.utc) + timedelta(days=3),
+    )
+
+    task = create_task(new_task, test_user.id, test_db)
+
+    assert task is not None
+    assert task.title == new_task.title
+    assert task.description == new_task.description
+    assert task.priority == TaskPriority.LOW
+    assert abs((task.deadline.replace(tzinfo=timezone.utc) - new_task.deadline).total_seconds()) < 2
+    assert task.user_id == test_user.id
+    assert task.status == TaskStatus.TODO
+    assert task.created_at is not None
+
+def test_create_task_exception(test_db, test_user: UserModel):
+    new_task = TaskCreate(
+        title="Test Task",
+        description="Test Description",
+        priority="low",
+        deadline=datetime.now(timezone.utc) + timedelta(days=3),
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        with patch.object(Session, 'add', side_effect=SQLAlchemyError):
+            create_task(new_task, test_user.id, test_db)
+
+    assert exc_info.value.status_code == 500
+    assert exc_info.value.detail == "An error occurred while creating the task."
