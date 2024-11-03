@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from testcontainers.mysql import MySqlContainer
 
-from crud.userRepo import create_user, get_user_by_email, get_user_by_username
+from crud.user import create_user, get_user_by_email, get_user_by_username
 from db.database import get_db
 from main import app
 from models.user import User
