@@ -13,7 +13,6 @@ def create_task(task: TaskCreate, user_id: str, db: Session = Depends(get_db)):
     db_task = TaskModel(
         title=task.title,
         description=task.description,
-        status=task.status,
         created_at=datetime.now(timezone.utc),
         priority=task.priority,
         deadline=task.deadline,

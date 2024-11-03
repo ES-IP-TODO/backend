@@ -5,8 +5,7 @@ from sqlalchemy.orm import Session
 
 from auth.auth import get_current_user, jwks
 from auth.JWTBearer import JWTBearer
-from crud.task import (create_task, delete_task, get_task_by_id,
-                       get_task_by_user_id, update_task)
+from crud.task import create_task, get_task_by_id, get_task_by_user_id
 from crud.user import get_user_by_username
 from db.database import get_db
 from models.task import Task as TaskModel
@@ -16,7 +15,7 @@ router = APIRouter(tags=["Tasks"])
 
 auth = JWTBearer(jwks)
 
-@router.post("/tasks", response_model=TaskInDB, dependencies=[Depends(auth)])
+@router.post("/tasks", response_model=TaskInDB, dependencies=[Depends(auth)], status_code=201)
 async def create_new_task(task: TaskCreate, user_username=Depends(get_current_user), db: Session = Depends(get_db)):
     user = get_user_by_username(user_username, db)
 

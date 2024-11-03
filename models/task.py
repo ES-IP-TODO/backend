@@ -29,4 +29,4 @@ class Task(Base):
     created_at = Column(DateTime, nullable=False)
     priority = Column(Enum(TaskPriority), nullable=False)
     deadline = Column(DateTime, nullable=False)
-    user_id = Column(String, ForeignKey("user.id"), nullable=False)
+    user_id = Column(String(50), ForeignKey("user.id"), nullable=False)

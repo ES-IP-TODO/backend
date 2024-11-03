@@ -7,7 +7,6 @@ from pydantic import BaseModel
 class Task(BaseModel):
     title: str
     description: str
-    status: str
     priority: str
     deadline: datetime
 
@@ -24,3 +23,5 @@ class TaskUpdate(Task):
 class TaskInDB(Task):
     id: str
     created_at: datetime
+    status: str
+    user_id: str
