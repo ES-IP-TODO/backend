@@ -232,3 +232,39 @@ def test_get_tasks_by_status(mock_jwt_bearer, mock_get_task_by_status, mock_db):
     assert task["user_id"] == "user_id"
     assert task["id"] == "task_id"
     assert task["created_at"] is not None
+
+# test update_task
+@patch("routers.task.update_task")
+@patch.object(JWTBearer, "__call__", return_value=credentials)
+def test_update_task(mock_jwt_bearer, mock_update_task, mock_db):
+    app.dependency_overrides[auth] = lambda: credentials
+    app.dependency_overrides[get_current_user] = lambda: "username1"
+
+    headers = {"Authorization": "Bearer token"}
+
+    task_data = {
+        "title": "Test Task",
+        "description": "Test Description",
+        "priority": "low",
+        "deadline": (datetime.now() + timedelta(days=1)).isoformat()
+    }
+
+    mock_update_task.return_value = TaskInDB(
+        **task_data,
+        created_at=datetime.now(),
+        id="task_id",
+        user_id="user_id",
+        status=TaskStatus.TODO,
+    )
+
+    response = client.put("/tasks/task_id", json=task_data, headers=headers)
+
+    assert response.status_code == 200
+    assert response.json()["title"] == task_data["title"]
+    assert response.json()["description"] == task_data["description"]
+    assert response.json()["priority"] == "low"
+    assert response.json()["status"] == "todo"
+    assert response.json()["deadline"] == task_data["deadline"]
+    assert response.json()["user_id"] == "user_id"
+    assert response.json()["id"] == "task_id"
+    assert response.json()["created_at"] is not None

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from testcontainers.mysql import MySqlContainer
 
 from crud.task import (create_task, get_task_by_id, get_task_by_status,
-                       get_task_by_user_id)
+                       get_task_by_user_id, update_task)
 from crud.user import create_user, get_user_by_email, get_user_by_username
 from db.database import get_db
 from main import app
@@ -18,7 +18,7 @@ from models.task import Task as TaskModel
 from models.task import TaskPriority, TaskStatus
 from models.user import User
 from models.user import User as UserModel
-from schemas.task import TaskCreate
+from schemas.task import TaskCreate, TaskUpdate
 from schemas.user import CreateUser
 
 logging.basicConfig(level=logging.INFO)
@@ -175,3 +175,30 @@ def test_get_task_by_status(test_db, test_user: UserModel):
     assert tasks is not None
     assert len(tasks) == 1
     assert tasks[0] == task
+
+def test_update_task(test_db, test_user: UserModel):
+    new_task = TaskCreate(
+        title="Test Task",
+        description="Test Description",
+        priority="low",
+        deadline=datetime.now(timezone.utc) + timedelta(days=3),
+    )
+
+    task = create_task(new_task, test_user.id, test_db)
+
+    updated_task = TaskUpdate(
+        title="Updated Task",
+        description="Updated Description",
+        priority="high",
+        deadline=datetime.now(timezone.utc) + timedelta(days=5),
+    )
+
+    updated_task = update_task(task.id, updated_task, test_db)
+    assert updated_task is not None
+    assert updated_task.title == "Updated Task"
+    assert updated_task.description == "Updated Description"
+    assert updated_task.priority == TaskPriority.HIGH
+    assert abs((updated_task.deadline - updated_task.deadline).total_seconds()) < 2
+    assert updated_task.user_id == test_user.id
+    assert updated_task.status == TaskStatus.TODO
+    assert updated_task.created_at is not None
