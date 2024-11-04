@@ -42,3 +42,22 @@ def get_task_by_id(task_id: str, db: Session = Depends(get_db)):
 def get_task_by_status(status: str, db: Session = Depends(get_db)):
     tasks = db.query(TaskModel).filter(TaskModel.status == status).all()
     return tasks
+
+def update_task(task_id: str, task: TaskUpdate, db: Session = Depends(get_db)):
+    db_task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
+
+    if db_task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    for attr, value in task.model_dump(exclude_unset=True).items():
+        if value is not None:
+            setattr(db_task, attr, value)
+
+    try:
+        db.commit()
+        db.refresh(db_task)
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="An error occurred while updating the task.") from e
+
+    return db_task
