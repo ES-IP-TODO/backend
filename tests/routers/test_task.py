@@ -268,3 +268,15 @@ def test_update_task(mock_jwt_bearer, mock_update_task, mock_db):
     assert response.json()["user_id"] == "user_id"
     assert response.json()["id"] == "task_id"
     assert response.json()["created_at"] is not None
+
+@patch("routers.task.delete_task")
+@patch.object(JWTBearer, "__call__", return_value=credentials)
+def test_delete_task(mock_jwt_bearer, mock_delete_task, mock_db):
+    app.dependency_overrides[auth] = lambda: credentials
+    app.dependency_overrides[get_current_user] = lambda: "username1"
+
+    headers = {"Authorization": "Bearer token"}
+
+    response = client.delete("/tasks/task_id", headers=headers)
+
+    assert response.status_code == 204

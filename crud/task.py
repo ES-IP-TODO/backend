@@ -71,3 +71,18 @@ def update_task(task_id: str, task: TaskUpdate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="An error occurred while updating the task.") from e
     
     return db_task
+
+def delete_task(task_id: str, db: Session = Depends(get_db)):
+    db_task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
+
+    if db_task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    try:
+        db.delete(db_task)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="An error occurred while deleting the task.") from e
+
+    return db_task

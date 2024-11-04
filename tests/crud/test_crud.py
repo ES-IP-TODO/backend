@@ -9,8 +9,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 from testcontainers.mysql import MySqlContainer
 
-from crud.task import (create_task, get_task_by_id, get_task_by_status,
-                       get_task_by_user_id, update_task)
+from crud.task import (create_task, delete_task, get_task_by_id,
+                       get_task_by_status, get_task_by_user_id, update_task)
 from crud.user import create_user, get_user_by_email, get_user_by_username
 from db.database import get_db
 from main import app
@@ -201,3 +201,15 @@ def test_update_task(test_db, test_user: UserModel):
     assert updated_task.user_id == test_user.id
     assert updated_task.status == TaskStatus.TODO
     assert updated_task.created_at is not None
+
+def test_delete_task(test_db, test_user: UserModel):
+    new_task = TaskCreate(
+        title="Test Task",
+        description="Test Description",
+        priority="low",
+        deadline=datetime.now(timezone.utc) + timedelta(days=3),
+    )
+
+    task = create_task(new_task, test_user.id, test_db)
+    delete_task(task.id, test_db)
+    assert test_db.query(TaskModel).filter(TaskModel.id == task.id).first() is None
