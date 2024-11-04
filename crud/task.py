@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 
 from fastapi import Depends, HTTPException
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from models.task import Task as TaskModel
+from models.task import TaskPriority, TaskStatus
 from schemas.task import TaskCreate, TaskInDB, TaskUpdate
 
 
@@ -51,13 +53,21 @@ def update_task(task_id: str, task: TaskUpdate, db: Session = Depends(get_db)):
 
     for attr, value in task.model_dump(exclude_unset=True).items():
         if value is not None:
-            setattr(db_task, attr, value)
-
+            if attr == "status":
+                print("attr: ", attr)
+                print("value: ", TaskStatus(value))
+                print("db_task status: ", db_task.status)
+                setattr(db_task, attr, TaskStatus(value))
+            elif attr == "priority":
+                setattr(db_task, attr, TaskPriority(value))
+            else:
+                setattr(db_task, attr, value)
+    
     try:
         db.commit()
         db.refresh(db_task)
     except SQLAlchemyError as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="An error occurred while updating the task.") from e
-
+    
     return db_task
