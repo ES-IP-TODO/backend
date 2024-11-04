@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -5,7 +6,8 @@ from sqlalchemy.orm import Session
 
 from auth.auth import get_current_user, jwks
 from auth.JWTBearer import JWTBearer
-from crud.task import create_task, get_task_by_id, get_task_by_user_id
+from crud.task import (create_task, get_task_by_id, get_task_by_status,
+                       get_task_by_user_id)
 from crud.user import get_user_by_username
 from db.database import get_db
 from models.task import Task as TaskModel
@@ -36,3 +38,9 @@ async def get_tasks(user_username=Depends(get_current_user), db: Session = Depen
 @router.get("/tasks/{task_id}", response_model=TaskInDB, dependencies=[Depends(auth)])
 async def get_task(task_id: str, db: Session = Depends(get_db)):
     return get_task_by_id(task_id, db)
+
+# get tasks by status
+@router.get("/tasks/status/{status}", response_model=List[TaskInDB], dependencies=[Depends(auth)])
+async def get_tasks_by_status(status: str, db: Session = Depends(get_db)):
+    tasks = get_task_by_status(status, db)
+    return tasks

@@ -38,3 +38,7 @@ def get_task_by_id(task_id: str, db: Session = Depends(get_db)):
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     return task
+
+def get_task_by_status(status: str, db: Session = Depends(get_db)):
+    tasks = db.query(TaskModel).filter(TaskModel.status == status).all()
+    return tasks
