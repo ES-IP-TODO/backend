@@ -198,7 +198,6 @@ def test_update_task(test_db, test_user: UserModel):
     assert updated_task.title == "Updated Task"
     assert updated_task.description == "Updated Description"
     assert updated_task.priority == TaskPriority.HIGH
-    assert abs((updated_task.deadline - updated_task.deadline).total_seconds()) < 2
     assert updated_task.user_id == test_user.id
     assert updated_task.status == TaskStatus.TODO
     assert updated_task.created_at is not None
