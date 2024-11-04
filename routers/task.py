@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from auth.auth import get_current_user, jwks
@@ -47,4 +47,9 @@ async def get_tasks_by_status(status: str, db: Session = Depends(get_db)):
 
 @router.put("/tasks/{task_id}", response_model=TaskInDB, dependencies=[Depends(auth)])
 async def update_task_by_id(task_id: str, task: TaskUpdate, db: Session = Depends(get_db)):
-    return update_task(task_id, task, db)
+    try:   
+        return update_task(task_id, task, db)
+
+    except Exception as exc:
+        logging.exception("Unexpected error updating task: %s", exc)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while updating the task.") from exc
