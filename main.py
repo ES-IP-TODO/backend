@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette import status
 
 from db.create_database import create_tables
 from db.database import SessionLocal
@@ -38,6 +39,16 @@ app.add_middleware(
 
 app.include_router(user.router)
 app.include_router(task.router)
+
+@app.get(
+    "/health",
+    tags=["healthcheck"],
+    summary="Perform a Health Check",
+    response_description="Return HTTP Status Code 200 (OK)",
+    status_code=status.HTTP_200_OK,
+)
+def get_health():
+    return {"status": "ok"}
 
 
 @app.middleware("http")
