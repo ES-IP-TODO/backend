@@ -13,7 +13,7 @@ from db.database import get_db
 from models.task import Task as TaskModel
 from schemas.task import TaskCreate, TaskInDB, TaskUpdate
 
-router = APIRouter(tags=["Tasks"])
+router = APIRouter(prefix="/api", tags=["Tasks"])
 
 auth = JWTBearer(jwks)
 

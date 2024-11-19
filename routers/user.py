@@ -17,7 +17,7 @@ from schemas.user import CreateUser
 
 load_dotenv()
 
-router = APIRouter(tags=["Authentication and Authorization"])
+router = APIRouter(prefix="/api", tags=["Authentication and Authorization"])
 
 auth = JWTBearer(jwks)
 
